@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Home, Users, FileText, Receipt, TrendingUp, Plus, ArrowRight, Wrench, AlertCircle } from 'lucide-react';
 import { Card, CardHeader } from '../Card';
 import { Button } from '../Button';
 import { Badge } from '../Badge';
 import { Dropdown } from '../Dropdown';
 import { UserRole } from '../../App';
+import axios from 'axios';
+import { API_URL } from '../../../config';
 
 interface DashboardPageProps {
   onNavigate: (page: string) => void;
@@ -12,12 +14,84 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
+
+  const [properties, setProperties] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [tenants, setTenants] = useState([]);
+  const [leases, setLeases] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [payments, setPayments] = useState([]);
+
+  useEffect(() => {
+    fetchProperties();
+    fetchUnits();
+    fetchTenants();
+    fetchLeases();
+    fetchInvoices();
+    fetchPayments();
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/proprietes/total/`);
+      setProperties(response.data['total_proprietes']);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
+  const fetchUnits = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/proprietes/total-units`);
+      setUnits(response.data);
+    } catch (error) {
+      console.error('Error fetching units:', error);
+    }
+  };
+
+  const fetchTenants = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/tenantsDashboard`);
+      setTenants(response.data);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+    }
+  };
+
+  const fetchLeases = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/leasesDashboard`);
+      setLeases(response.data);
+    } catch (error) {
+      console.error('Error fetching leases:', error);
+    }
+  };
+
+  const fetchInvoices = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/invoices/total`);
+      setInvoices(response.data);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/paiements/Detail`);
+      setPayments(response.data);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+    }
+  };
+
+
   // Admin Dashboard
   if (userRole === 'admin') {
     const metrics = [
       {
         label: 'Total Properties',
-        value: '24',
+        value: properties,
         change: '+12%',
         trend: 'up',
         icon: <Building2 size={24} />,
