@@ -15,25 +15,28 @@ interface DashboardPageProps {
 
 export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
 
-  const [properties, setProperties] = useState([]);
-  const [units, setUnits] = useState([]);
-  const [tenants, setTenants] = useState([]);
-  const [leases, setLeases] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [payments, setPayments] = useState([]);
+  const [properties, setProperties] = useState(0);
+  const [units, setUnits] = useState(0);
+  const [tenants, setTenants] = useState(0);
+  const [bails, setBails] = useState(0);
+  const [occupancyRate, setOccupancyRate] = useState(0);
 
   useEffect(() => {
     fetchProperties();
     fetchUnits();
     fetchTenants();
-    fetchLeases();
-    fetchInvoices();
-    fetchPayments();
+    fetchbails();
+    fetchOccupancyRate();
   }, []);
 
   const fetchProperties = async () => {
     try {
-      const response = await axios.get(`${API_URL}/proprietes/total/`);
+      const response = await axios.get(`${API_URL}/proprietes/total/`,{
+        headers: {
+          'Content-Type': 'application/json',
+          //'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        }
+      });
       setProperties(response.data['total_proprietes']);
     } catch (error) {
       console.error('Error fetching properties:', error);
@@ -42,8 +45,8 @@ export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
 
   const fetchUnits = async () => {
     try {
-      const response = await axios.get(`${API_URL}/proprietes/total-units`);
-      setUnits(response.data);
+      const response = await axios.get(`${API_URL}/unites/Dashboard`);
+      setUnits(response.data['total_units']);
     } catch (error) {
       console.error('Error fetching units:', error);
     }
@@ -58,28 +61,19 @@ export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
     }
   };
 
-  const fetchLeases = async () => {
+  const fetchbails = async () => {
     try {
-      const response = await axios.get(`${API_URL}/leasesDashboard`);
-      setLeases(response.data);
+      const response = await axios.get(`${API_URL}/BailDashboard/`);
+      setBails(response.data['total_bails']);
     } catch (error) {
-      console.error('Error fetching leases:', error);
+      console.error('Error fetching bails:', error);
     }
   };
 
-  const fetchInvoices = async () => {
+  const fetchOccupancyRate = async () => {
     try {
-      const response = await axios.get(`${API_URL}/invoices/total`);
-      setInvoices(response.data);
-    } catch (error) {
-      console.error('Error fetching invoices:', error);
-    }
-  };
-
-  const fetchPayments = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/paiements/Detail`);
-      setPayments(response.data);
+      const response = await axios.get(`${API_URL}/OccupancyRate`);
+      setOccupancyRate(response.data['occupancy_rate']);
     } catch (error) {
       console.error('Error fetching payments:', error);
     }
@@ -99,7 +93,7 @@ export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
       },
       {
         label: 'Total Units',
-        value: '156',
+        value: units,
         change: '+8%',
         trend: 'up',
         icon: <Home size={24} />,
@@ -107,7 +101,7 @@ export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
       },
       {
         label: 'Occupancy Rate',
-        value: '92%',
+        value: `${occupancyRate}%`,
         change: '+5%',
         trend: 'up',
         icon: <TrendingUp size={24} />,
@@ -115,7 +109,7 @@ export function DashboardPage({ onNavigate, userRole }: DashboardPageProps) {
       },
       {
         label: 'Active Leases',
-        value: '143',
+        value: bails,
         change: '+3%',
         trend: 'up',
         icon: <FileText size={24} />,

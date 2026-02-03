@@ -6,7 +6,8 @@ import { Badge } from '../Badge';
 import { Table } from '../Table';
 import { Modal } from '../Modal';
 import { Input, Select } from '../Input';
-
+import axios from 'axios';
+import { API_URL } from '../../../config';
 interface PropertiesPageProps {
   onNavigate: (page: string, propertyId?: string) => void;
 }
@@ -76,7 +77,75 @@ export function PropertiesPage({ onNavigate }: PropertiesPageProps) {
     setShowDeleteModal(false);
     setSelectedProperty(null);
   };
+  const [property_name, setPropertyName] = useState('');
+  const [street_address, setStreetAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zip_code, setZipCode] = useState('');
+  const [country, setCountry] = useState('');
+  const [property_type, setPropertyType] = useState('');
+  const [total_units, setTotalUnits] = useState('');
+  const [purchase_date, setPurchaseDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  // add properties
+  /*
+  field:
+  property_name = models.CharField(max_length=100)
+    street_address = models.CharField(max_length=200)
+    city = models.CharField(max_length=50)
+    state = models.CharField(max_length=50)
+    zip_code = models.CharField(max_length=10)
+    country = models.CharField(max_length=50)
+    property_type = models.CharField(max_length=20, choices=PROPERTY_TYPE_CHOICES)
+    total_units = models.IntegerField()
+    purchase_date = models.DateField(auto_now_add=True, null=True, blank=True)
+    description = models.TextField(blank=True, null=True)
+    photo = models.ImageField(upload_to='proprietes/', blank=True, null=True)
 
+  */
+  const AddProperties = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    formData.append('property_name', property_name);
+    formData.append('street_address', street_address);
+    formData.append('city', city);
+    formData.append('state', state);
+    formData.append('zip_code', zip_code);
+    formData.append('country', country);
+    formData.append('property_type', property_type);
+    formData.append('total_units', total_units);
+    formData.append('purchase_date', purchase_date);
+    formData.append('description', description);
+    if (photo) {
+      formData.append('photo', photo);
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/proprietes/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Property added successfully:', response.data);
+      setShowAddModal(false);
+      // Reset form
+      setPropertyName('');
+      setStreetAddress('');
+      setCity('');
+      setState('');
+      setZipCode('');
+      setCountry('');
+      setPropertyType('');
+      setTotalUnits('');
+      setPurchaseDate('');
+      setDescription('');
+      setPhoto(null);
+    } catch (error) {
+      console.error('Error adding property:', error);
+    }
+  }
   const columns = [
     {
       key: 'name',
@@ -298,43 +367,59 @@ export function PropertiesPage({ onNavigate }: PropertiesPageProps) {
             <Button variant="secondary" onClick={() => setShowAddModal(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setShowAddModal(false)}>
+            <Button type="submit" onClick={AddProperties}>
               Add Property
             </Button>
           </>
         }
       >
-        <form className="space-y-5">
-          <Input label="Property Name" placeholder="Enter property name" required />
+        <form className="space-y-5" onSubmit={AddProperties} encType="multipart/form-data">
+          <Input label="Property Name" value={property_name} onChange={(e) => setPropertyName(e.target.value)} placeholder="Enter property name" required />
           
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Street Address" placeholder="123 Main Street" required />
-            <Input label="City" placeholder="New York" required />
+            <Input label="Street Address" value={street_address} onChange={(e) => setStreetAddress(e.target.value)} placeholder="123 Main Street" required />
+            <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} placeholder="New York" required />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <Input label="State" placeholder="NY" required />
-            <Input label="ZIP Code" placeholder="10001" required />
-            <Input label="Country" placeholder="USA" required />
+            <Input label="State" value={state} onChange={(e) => setState(e.target.value)} placeholder="NY" required />
+            <Input label="ZIP Code" value={zip_code} onChange={(e) => setZipCode(e.target.value)} placeholder="10001" required />
+            <Input label="Country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="USA" required />
           </div>
-
+          {/* 
+          PROPERTY_TYPE_CHOICES = [
+        ('Apartment', 'Apartement'),
+        ('Single_Family_Home', 'FamilyHome'),
+        ('Commercial', 'commercial'),
+    ] */}
           <Select
             label="Property Type"
+            value={property_type}
+            onChange={(e) => setPropertyType(e.target.value)}
             options={[
-              { value: '', label: 'Select type...' },
-              { value: 'apartment', label: 'Apartment Complex' },
-              { value: 'house', label: 'Single Family Home' },
-              { value: 'commercial', label: 'Commercial Building' },
+              { value: 'Apartment', label: 'Apartement' },
+              { value: 'Single_Family_Home', label: 'FamilyHome' },
+              { value: 'Commercial', label: 'commercial' },
             ]}
             required
           />
 
           <div className="grid grid-cols-2 gap-4">
-            <Input type="number" label="Total Units" placeholder="0" required />
-            <Input label="Purchase Date" type="date" required />
+            <Input type="number" label="Total Units" value={total_units} onChange={(e) => setTotalUnits(e.target.value)} placeholder="0" required />
+            <Input label="Purchase Date" type="date" value={purchase_date} onChange={(e) => setPurchaseDate(e.target.value)} required />
           </div>
 
-          <Input label="Description" placeholder="Brief description of the property" />
+          <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the property" />
+          <Input 
+            label="Photo" 
+            type="file" 
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                setPhoto(e.target.files[0]);
+              }
+            }} 
+            placeholder="Upload property photo" 
+          />
         </form>
       </Modal>
 
