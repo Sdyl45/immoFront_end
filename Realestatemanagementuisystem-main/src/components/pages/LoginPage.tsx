@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { Input } from '../Input';
-import { Button } from '../Button';
+import Input from '../../components/Input';
+import { Button } from '../../components/Button';
 import { UserRole } from '../../App';
+import styles from './LoginPage.module.scss';
 
 interface LoginPageProps {
   onLogin: (role: UserRole) => void;
@@ -11,10 +13,19 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToForgotPassword }: LoginPageProps) {
-  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword(prev => !prev);
+  }, []);
 
   // Mock user database for demonstration
   const mockUsers: Record<string, { password: string; role: UserRole }> = {
@@ -26,124 +37,187 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToForgotPas
     'john.m@immopoem.com': { password: 'maintenance123', role: 'maintenance' },
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const user = mockUsers[email.toLowerCase()];
-    
-    if (!user) {
-      setError('Invalid email or password');
+    // Basic validation
+    if (!email.trim()) {
+      setError('Please enter your email');
+      emailRef.current?.focus();
       return;
     }
 
-    if (user.password !== password) {
-      setError('Invalid email or password');
+    if (!password) {
+      setError('Please enter your password');
+      passwordRef.current?.focus();
       return;
     }
 
-    // Login successful - pass the role to parent
-    onLogin(user.role);
+    setIsLoading(true);
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock user data - replace with actual authentication
+      const user = mockUsers[email.toLowerCase()];
+
+      if (user && user.password === password) {
+        // Save to localStorage if remember me is checked
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
+
+        // Login successful - pass the role to parent
+        onLogin(user.role);
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--color-primary-50)] to-[var(--color-primary-100)] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--color-primary-600)] mb-4">
-            <span className="text-white text-2xl">IP</span>
+    <div className={styles.loginContainer}>
+      <div className={styles.loginCard}>
+        <div className={styles.header}>
+          <div className={styles.logo}>
+            <span>IP</span>
           </div>
-          <h1 className="mb-2">Welcome to ImmoPoem</h1>
-          <p className="text-[var(--color-gray-600)]">Sign in to manage your properties</p>
+          <h1>Welcome Back</h1>
+          <p>Please sign in to access your account</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className={styles.errorMessage}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputGroup}>
             <Input
-              label="Email Address"
+              ref={emailRef}
               type="email"
-              placeholder="john@example.com"
-              icon={<Mail size={18} />}
+              label="Email Address"
+              placeholder="Enter your email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError('');
-              }}
+              onChange={(e) => setEmail(e.target.value)}
+              icon={
+                <Mail
+                  size={18}
+                  className="text-gray-400"
+                  aria-hidden="true"
+                />
+              }
+              autoComplete="username"
               required
+              containerClass="mb-4"
+              inputClass={styles.inputField}
             />
-
-            <div className="relative">
-              <Input
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                icon={<Lock size={18} />}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError('');
-                }}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[42px] text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)]"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            {error && (
-              <div className="p-3 bg-[var(--color-danger-50)] border border-[var(--color-danger-200)] rounded-lg">
-                <p className="text-sm text-[var(--color-danger-700)]">{error}</p>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-[var(--color-gray-300)]" />
-                <span className="text-sm text-[var(--color-gray-700)]">Remember me</span>
-              </label>
-              <button
-                type="button"
-                onClick={onNavigateToForgotPassword}
-                className="text-sm text-[var(--color-primary-600)] hover:text-[var(--color-primary-700)]"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            <Button type="submit" className="w-full" size="lg">
-              Sign In
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-[var(--color-gray-600)]">
-              Don&apos;t have an account?{' '}
-              <button
-                onClick={onNavigateToRegister}
-                className="text-[var(--color-primary-600)] hover:text-[var(--color-primary-700)]"
-              >
-                Sign up
-              </button>
-            </p>
           </div>
 
-          {/* Demo Credentials Info */}
-          <div className="mt-6 p-4 bg-[var(--color-gray-50)] rounded-lg border border-[var(--color-gray-200)]">
-            <p className="text-xs text-[var(--color-gray-600)] mb-2">Demo Credentials:</p>
-            <div className="space-y-1 text-xs text-[var(--color-gray-600)]">
-              <p><strong>Admin:</strong> admin@immopoem.com / admin123</p>
-              <p><strong>Tenant:</strong> tenant@immopoem.com / tenant123</p>
-              <p><strong>Maintenance:</strong> maintenance@immopoem.com / maintenance123</p>
-            </div>
+          <div className={styles.inputGroup}>
+            <Input
+              ref={passwordRef}
+              type={showPassword ? 'text' : 'password'}
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              icon={
+                <Lock
+                  size={18}
+                  className="text-gray-400"
+                  aria-hidden="true"
+                />
+              }
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} aria-hidden="true" />
+                  ) : (
+                    <Eye size={18} aria-hidden="true" />
+                  )}
+                </button>
+              }
+              autoComplete="current-password"
+              required
+              containerClass="mb-1"
+              inputClass={styles.inputField}
+            />
+          </div>
+
+          <div className={styles.options}>
+            <label className={styles.rememberMe}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Remember me</span>
+            </label>
+
+            <button
+              type="button"
+              className={styles.forgotPassword}
+              onClick={onNavigateToForgotPassword}
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <div className={styles.submitButton}>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </>
+              ) : 'Sign In'}
+            </button>
+          </div>
+        </form>
+
+        <div className={styles.signupLink}>
+          <p>Don't have an account?{' '}
+            <button onClick={onNavigateToRegister}>
+              Sign up
+            </button>
+          </p>
+        </div>
+
+        <div className={styles.demoCredentials}>
+          <p>Demo Credentials:</p>
+          <div>
+            <p><strong>Admin:</strong> admin@immopoem.com / admin123</p>
+            <p><strong>Tenant:</strong> tenant@immopoem.com / tenant123</p>
+            <p><strong>Maintenance:</strong> maintenance@immopoem.com / maintenance123</p>
           </div>
         </div>
 
-        <p className="text-center mt-6 text-sm text-[var(--color-gray-600)]">
-          © 2025 ImmoPoem. All rights reserved.
+        <p className={styles.copyright}>
+          &copy; 2025 ImmoPoem. All rights reserved.
         </p>
       </div>
     </div>
