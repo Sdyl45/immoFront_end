@@ -1,0 +1,273 @@
+// Variables
+// @import '../../styles/variables';
+
+// Page Container
+.pageContainer {
+  padding: 1.5rem;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+// Page Header
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: gray;
+    margin: 0;
+  }
+}
+
+// Stats Grid
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+// Stat Card
+.statCard {
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  border: 1px solid gray;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.statContent {
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: gray;
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: gray;
+  }
+}
+
+.statTrend {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  &.up {
+    color: #008000;
+  }
+
+  &.down {
+    color: #FF0000;
+  }
+}
+
+// Filters
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  background: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid gray;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+// Table
+.tenantTable {
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid gray;
+  overflow: hidden;
+}
+
+// Tenant Card (Mobile View)
+.tenantCard {
+  padding: 1rem;
+  border-bottom: 1px solid gray;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: gray;
+  }
+
+  .tenantHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+  }
+
+  .tenantName {
+    font-weight: 600;
+    color: gray;
+    margin: 0 0 0.25rem;
+  }
+
+  .tenantMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: gray;
+  }
+
+  .tenantActions {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchInput {
+    max-width: 100%;
+  }
+}
+
+// Status Badges
+.statusBadge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &.active {
+    background-color: green;
+    color: green;
+  }
+
+  &.inactive {
+    background-color: gray;
+    color: gray;
+  }
+
+  &.pending {
+    background-color: yellow;
+    color: yellow;
+  }
+
+  &.overdue {
+    background-color: red;
+    color: red;
+  }
+}
+
+// Action Buttons
+.actionButton {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: gray;
+  }
+
+  &.edit {
+    color: blue;
+    
+    &:hover {
+      background-color: blue;
+    }
+  }
+
+  &.delete {
+    color: red;
+    
+    &:hover {
+      background-color: red;
+    }
+  }
+}
+
+// Modal Content
+.modalContent {
+  max-width: 500px;
+  width: 100%;
+  margin: 2rem auto;
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid gray;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: gray;
+    margin: 0;
+  }
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid gray;
+}

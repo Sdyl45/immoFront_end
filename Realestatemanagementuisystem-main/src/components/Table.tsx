@@ -3,20 +3,30 @@ import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Input } from './Input';
 import { Button } from './Button';
 
-interface Column<T> {
+export interface Column<T> {
   key: string;
   header: string;
   render?: (item: T) => React.ReactNode;
   width?: string;
+  className?: string;
+  headerClassName?: string;
 }
 
-interface TableProps<T> {
+export interface TableProps<T> {
   data: T[];
   columns: Column<T>[];
   searchable?: boolean;
   searchPlaceholder?: string;
   onRowClick?: (item: T) => void;
   pageSize?: number;
+  rowKey?: keyof T | ((item: T) => string | number);
+  className?: string;
+  headerClassName?: string;
+  rowClassName?: string | ((item: T, index: number) => string);
+  cellClassName?: string | ((item: T, columnKey: string, index: number) => string);
+  emptyText?: React.ReactNode;
+  loading?: boolean;
+  loadingText?: string;
 }
 
 export function Table<T extends Record<string, any>>({
@@ -26,6 +36,14 @@ export function Table<T extends Record<string, any>>({
   searchPlaceholder = 'Search...',
   onRowClick,
   pageSize = 10,
+  rowKey = 'id',
+  className = '',
+  headerClassName = '',
+  rowClassName = '',
+  cellClassName = '',
+  emptyText = 'No data found',
+  loading = false,
+  loadingText = 'Loading...',
 }: TableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,8 +60,31 @@ export function Table<T extends Record<string, any>>({
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = filteredData.slice(startIndex, startIndex + pageSize);
 
+  const getRowKey = (item: T, index: number): string | number => {
+    if (typeof rowKey === 'function') {
+      return rowKey(item);
+    }
+    return item[rowKey as string] || index;
+  };
+
+  const getRowClassNames = (item: T, index: number): string => {
+    const baseClasses = [
+      onRowClick ? 'cursor-pointer hover:bg-gray-50' : '',
+      typeof rowClassName === 'function' ? rowClassName(item, index) : rowClassName
+    ].filter(Boolean).join(' ');
+    
+    return baseClasses || '';
+  };
+
+  const getCellClassNames = (item: T, columnKey: string, index: number): string => {
+    if (typeof cellClassName === 'function') {
+      return cellClassName(item, columnKey, index);
+    }
+    return cellClassName || '';
+  };
+
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className}`}>
       {searchable && (
         <div className="max-w-md">
           <Input
@@ -58,48 +99,74 @@ export function Table<T extends Record<string, any>>({
         </div>
       )}
 
-      <div className="border border-[var(--color-gray-200)] rounded-lg overflow-hidden">
+      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[var(--color-gray-50)] border-b border-[var(--color-gray-200)]">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className={`bg-gray-50 ${headerClassName}`}>
               <tr>
-                {columns.map((column) => (
-                  <th
-                    key={column.key}
-                    className="px-6 py-3 text-left text-[var(--color-gray-700)]"
-                    style={{ width: column.width }}
-                  >
-                    {column.header}
-                  </th>
-                ))}
+                {columns.map((column) => {
+                  const headerClass = [
+                    'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+                    column.headerClassName || ''
+                  ].filter(Boolean).join(' ');
+                  
+                  return (
+                    <th
+                      key={column.key}
+                      scope="col"
+                      className={headerClass}
+                      style={{ width: column.width }}
+                    >
+                      {column.header}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--color-gray-200)] bg-white">
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item, index) => (
-                  <tr
-                    key={index}
-                    className={`${
-                      onRowClick
-                        ? 'cursor-pointer hover:bg-[var(--color-gray-50)] transition-colors'
-                        : ''
-                    }`}
-                    onClick={() => onRowClick?.(item)}
-                  >
-                    {columns.map((column) => (
-                      <td key={column.key} className="px-6 py-4">
-                        {column.render ? column.render(item) : item[column.key]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-gray-500">
+                    {loadingText}
+                  </td>
+                </tr>
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((item, index) => {
+                  const rowKeyValue = getRowKey(item, index);
+                  const rowClasses = getRowClassNames(item, index);
+                  
+                  return (
+                    <tr
+                      key={rowKeyValue}
+                      className={rowClasses}
+                      onClick={() => onRowClick?.(item)}
+                    >
+                      {columns.map((column) => {
+                        const cellClasses = [
+                          'px-6 py-4 whitespace-nowrap text-sm text-gray-900',
+                          getCellClassNames(item, column.key, index),
+                          column.className || ''
+                        ].filter(Boolean).join(' ');
+                        
+                        return (
+                          <td 
+                            key={`${rowKeyValue}-${column.key}`} 
+                            className={cellClasses}
+                          >
+                            {column.render ? column.render(item) : item[column.key]}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-6 py-12 text-center text-[var(--color-gray-500)]"
+                    className="px-6 py-12 text-center text-sm text-gray-500"
                   >
-                    No data found
+                    {emptyText}
                   </td>
                 </tr>
               )}
@@ -108,33 +175,81 @@ export function Table<T extends Record<string, any>>({
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-3 bg-[var(--color-gray-50)] border-t border-[var(--color-gray-200)]">
-            <p className="text-sm text-[var(--color-gray-600)]">
-              Showing {startIndex + 1} to {Math.min(startIndex + pageSize, filteredData.length)} of{' '}
-              {filteredData.length} results
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                icon={<ChevronLeft size={16} />}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
-              </Button>
-              <span className="text-sm text-[var(--color-gray-700)] px-3">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              </button>
+              <button
+                onClick={() => setCurrentPage(p => p + 1)}
                 disabled={currentPage === totalPages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
-                <ChevronRight size={16} />
-              </Button>
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                  <span className="font-medium">
+                    {Math.min(startIndex + pageSize, filteredData.length)}
+                  </span>{' '}
+                  of <span className="font-medium">{filteredData.length}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Previous</span>
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          pageNum === currentPage
+                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Next</span>
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </nav>
+              </div>
             </div>
           </div>
         )}

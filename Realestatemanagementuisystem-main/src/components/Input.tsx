@@ -143,11 +143,18 @@ export function TextArea({
   );
 }
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectOption {
+  value: string | number;
+  label: string;
+  disabled?: boolean;
+}
+
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
   label?: string;
   error?: string;
   helperText?: string;
-  options: { value: string; label: string }[];
+  options?: SelectOption[];
+  children?: React.ReactNode;
 }
 
 export function Select({ 
@@ -155,36 +162,55 @@ export function Select({
   error, 
   helperText,
   options,
+  children,
   className = '',
   ...props 
 }: SelectProps) {
+  const renderOptions = () => {
+    if (children) {
+      return children;
+    }
+    
+    if (options && options.length > 0) {
+      return options.map((option) => (
+        <option 
+          key={String(option.value)} 
+          value={option.value}
+          disabled={option.disabled}
+        >
+          {option.label}
+        </option>
+      ));
+    }
+    
+    return null;
+  };
+
   return (
-    <div className="w-full">
+    <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       {label && (
-        <label className="block mb-2 text-[var(--color-gray-700)]">
+        <label className="block text-sm font-medium text-gray-700">
           {label}
-          {props.required && <span className="text-[var(--color-danger-500)] ml-1">*</span>}
+          {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      <select
-        className={`w-full px-4 py-2.5 rounded-lg border ${
-          error 
-            ? 'border-[var(--color-danger-500)] focus:ring-2 focus:ring-[var(--color-danger-200)]' 
-            : 'border-[var(--color-gray-300)] focus:ring-2 focus:ring-[var(--color-primary-200)] focus:border-[var(--color-primary-500)]'
-        } outline-none transition-all bg-white ${className}`}
-        {...props}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none sm:text-sm ${
+            error
+              ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
+              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+          }`}
+          {...props}
+        >
+          {renderOptions()}
+        </select>
+      </div>
       {error && (
-        <p className="mt-1.5 text-sm text-[var(--color-danger-600)]">{error}</p>
+        <p className="mt-1 text-sm text-red-600">{error}</p>
       )}
       {helperText && !error && (
-        <p className="mt-1.5 text-sm text-[var(--color-gray-500)]">{helperText}</p>
+        <p className="mt-1 text-sm text-gray-500">{helperText}</p>
       )}
     </div>
   );
