@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Plus, Edit, Eye, FileText, Calendar, Trash2 } from 'lucide-react';
 import { Card } from '../Card';
 import { Button } from '../Button';
 import { Badge } from '../Badge';
 import { Table } from '../Table';
-
+import axios from 'axios';
+import { API_URL } from '../../../config';
 interface LeasesPageProps {
   onNavigate: (page: string, leaseId?: string) => void;
   onCreateLease: () => void;
@@ -76,7 +77,30 @@ export function LeasesPage({ onNavigate, onCreateLease }: LeasesPageProps) {
       status: 'Upcoming',
     },
   ];
-
+  const [bailData, setBailData] = useState({
+    total_bails: 0,
+    active_leases: 0,
+    expiring_soon: 0,
+    upcoming_leases: 0,
+    total_monthly_revenue:0
+      });
+  const fetchbails = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/BailDashboard/`);
+      setBailData({
+        total_bails: response.data['total_bails'] || 0,
+        active_leases: response.data['active_leases']['count'] || 0,
+        expiring_soon: response.data['expiring_soon']['count'] || 0,
+        upcoming_leases: response.data['upcoming_leases']['count'] || 0,
+        total_monthly_revenue: response.data['total_monthly_revenue'] || 0
+      });
+    } catch (error) {
+      console.error('Error fetching bails:', error);
+    }
+  };
+   useEffect(() => {
+    fetchbails();
+    }, []);
   const handleDelete = (lease: typeof leases[0]) => {
     setSelectedLease(lease);
     setShowDeleteModal(true);
@@ -214,27 +238,24 @@ export function LeasesPage({ onNavigate, onCreateLease }: LeasesPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Active Leases</p>
-          <h2 className="mb-2">{leases.filter((l) => l.status === 'Active').length}</h2>
+          <h2 className="mb-2">{bailData.total_bails}</h2>
           <Badge variant="success">Currently active</Badge>
         </Card>
         <Card>
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Expiring Soon</p>
-          <h2 className="mb-2">{leases.filter((l) => l.status === 'Expiring Soon').length}</h2>
+          <h2 className="mb-2">{bailData.expiring_soon}</h2>
           <Badge variant="warning">Next 60 days</Badge>
         </Card>
         <Card>
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Upcoming</p>
-          <h2 className="mb-2">{leases.filter((l) => l.status === 'Upcoming').length}</h2>
+          <h2 className="mb-2">{bailData.upcoming_leases}</h2>
           <Badge variant="info">Starting soon</Badge>
         </Card>
         <Card>
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Total Revenue</p>
           <h2 className="mb-2">
             $
-            {leases
-              .filter((l) => l.status === 'Active')
-              .reduce((sum, l) => sum + parseInt(l.rent.replace(/[$,]/g, '')), 0)
-              .toLocaleString()}
+            {bailData.total_monthly_revenue}
           </h2>
           <p className="text-sm text-[var(--color-gray-500)]">Monthly</p>
         </Card>

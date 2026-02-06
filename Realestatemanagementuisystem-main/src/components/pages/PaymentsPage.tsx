@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Plus, Download } from 'lucide-react';
 import { Card } from '../Card';
 import { Button } from '../Button';
@@ -6,7 +6,8 @@ import { Badge } from '../Badge';
 import { Table } from '../Table';
 import { Modal } from '../Modal';
 import { Input, Select } from '../Input';
-
+import axios from 'axios';
+import { API_URL } from '../../../config';
 export function PaymentsPage() {
   const [showRecordModal, setShowRecordModal] = useState(false);
 
@@ -60,6 +61,30 @@ export function PaymentsPage() {
       status: 'Completed',
     },
   ];
+  const [paymentData, setPaymentData] = useState({
+    total_received: 0,
+    completed: 0,
+    pending: 0,
+    late: 0,
+    collection_rate:0
+        });
+        const fetchbails = async () => {
+          try {
+            const response = await axios.get(`${API_URL}/paiements/dashboard`);
+            setPaymentData({
+              total_received: response.data['total_received'] || 0,
+              completed: response.data['completed'] || 0,
+              pending: response.data['pending'] || 0,
+              late: response.data['late'] || 0,
+              collection_rate: response.data['collection_rate'] || 0
+            });
+          } catch (error) {
+            console.error('Error fetching bails:', error);
+          }
+        };
+         useEffect(() => {
+          fetchbails();
+          }, []);
 
   const columns = [
     {
@@ -151,10 +176,7 @@ export function PaymentsPage() {
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Total Received</p>
           <h2 className="mb-2">
             $
-            {payments
-              .filter((p) => p.status === 'Completed')
-              .reduce((sum, p) => sum + parseInt(p.amount.replace(/[$,]/g, '')), 0)
-              .toLocaleString()}
+            {paymentData.total_received}
           </h2>
           <p className="text-sm text-[var(--color-gray-500)]">This month</p>
         </Card>
@@ -165,13 +187,13 @@ export function PaymentsPage() {
         </Card>
         <Card>
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Processing</p>
-          <h2 className="mb-2">{payments.filter((p) => p.status === 'Processing').length}</h2>
+          <h2 className="mb-2">{paymentData.pending}</h2>
           <Badge variant="warning">Payments</Badge>
         </Card>
         <Card>
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Collection Rate</p>
           <h2 className="mb-2">
-            {Math.round((payments.filter((p) => p.status === 'Completed').length / payments.length) * 100)}%
+            {paymentData.collection_rate}%
           </h2>
           <p className="text-sm text-[var(--color-gray-500)]">Success rate</p>
         </Card>

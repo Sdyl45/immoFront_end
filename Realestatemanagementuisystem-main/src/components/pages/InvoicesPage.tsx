@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Plus, Eye, Download, Send } from 'lucide-react';
 import { Card } from '../Card';
 import { Button } from '../Button';
@@ -6,7 +6,8 @@ import { Badge } from '../Badge';
 import { Table } from '../Table';
 import { Modal } from '../Modal';
 import { Input, Select } from '../Input';
-
+import axios from 'axios';
+import { API_URL } from '../../../config';
 interface InvoicesPageProps {
   onNavigate: (page: string, invoiceId?: string) => void;
 }
@@ -64,6 +65,31 @@ export function InvoicesPage({ onNavigate }: InvoicesPageProps) {
       status: 'Paid',
     },
   ];
+  const [invoiceData, setInvoiceData] = useState({
+    total_invoiced: 0,
+    paid: 0,
+    pending: 0,
+    overdue: 0,
+    invoices:[]
+        });
+        const fetchbails = async () => {
+          try {
+            const response = await axios.get(`${API_URL}/BailDashboard/`);
+            setInvoiceData({
+              total_invoiced: response.data['total_invoiced'] || 0,
+              paid: response.data['paid'] || 0,
+              pending: response.data['pending'] || 0,
+              overdue: response.data['overdue'] || 0,
+              invoices: response.data['invoices'] || []
+            });
+          } catch (error) {
+            console.error('Error fetching bails:', error);
+          }
+        };
+         useEffect(() => {
+          fetchbails();
+          }, []);
+
 
   const columns = [
     {
@@ -155,6 +181,7 @@ export function InvoicesPage({ onNavigate }: InvoicesPageProps) {
     },
   ];
 
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -174,9 +201,7 @@ export function InvoicesPage({ onNavigate }: InvoicesPageProps) {
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Total Invoiced</p>
           <h2 className="mb-2">
             $
-            {invoices
-              .reduce((sum, inv) => sum + parseInt(inv.amount.replace(/[$,]/g, '')), 0)
-              .toLocaleString()}
+            {invoiceData.total_invoiced}
           </h2>
           <p className="text-sm text-[var(--color-gray-500)]">This month</p>
         </Card>
@@ -184,10 +209,7 @@ export function InvoicesPage({ onNavigate }: InvoicesPageProps) {
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Paid</p>
           <h2 className="mb-2">
             $
-            {invoices
-              .filter((inv) => inv.status === 'Paid')
-              .reduce((sum, inv) => sum + parseInt(inv.amount.replace(/[$,]/g, '')), 0)
-              .toLocaleString()}
+            {invoiceData.paid}
           </h2>
           <Badge variant="success">{invoices.filter((inv) => inv.status === 'Paid').length} invoices</Badge>
         </Card>
@@ -195,10 +217,7 @@ export function InvoicesPage({ onNavigate }: InvoicesPageProps) {
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Pending</p>
           <h2 className="mb-2">
             $
-            {invoices
-              .filter((inv) => inv.status === 'Pending')
-              .reduce((sum, inv) => sum + parseInt(inv.amount.replace(/[$,]/g, '')), 0)
-              .toLocaleString()}
+            {invoiceData.pending}
           </h2>
           <Badge variant="warning">{invoices.filter((inv) => inv.status === 'Pending').length} invoices</Badge>
         </Card>
@@ -206,10 +225,7 @@ export function InvoicesPage({ onNavigate }: InvoicesPageProps) {
           <p className="text-sm text-[var(--color-gray-600)] mb-1">Overdue</p>
           <h2 className="mb-2">
             $
-            {invoices
-              .filter((inv) => inv.status === 'Overdue')
-              .reduce((sum, inv) => sum + parseInt(inv.amount.replace(/[$,]/g, '')), 0)
-              .toLocaleString()}
+            {invoiceData.overdue}
           </h2>
           <Badge variant="danger">{invoices.filter((inv) => inv.status === 'Overdue').length} invoices</Badge>
         </Card>
