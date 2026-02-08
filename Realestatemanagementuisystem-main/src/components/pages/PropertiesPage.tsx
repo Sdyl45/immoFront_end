@@ -716,7 +716,9 @@ export function PropertiesPage({ onNavigate, onLogout }: PropertiesPageProps) {
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                   }}
+                  
                 >
+                  <img src={property.photo||'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'} />
                   <div className={styles.propertyImageOverlay}></div>
 
                   {/* Status Badge */}
@@ -1017,7 +1019,6 @@ export function PropertiesPage({ onNavigate, onLogout }: PropertiesPageProps) {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         title="Add New Property"
-        size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowAddModal(false)}>
@@ -1189,16 +1190,16 @@ export function PropertiesPage({ onNavigate, onLogout }: PropertiesPageProps) {
           </div>
           
           <div className="pt-2">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? 'Saving...' : 'Save Property'}
-            </Button>
+            </button>
           </div>
         </form>
       </Modal>
 
       {/* Edit Property Modal */}
       <Modal
-        isOpen={showAddModal}
+        isOpen={(0)}
         onClose={() => {
           setShowAddModal(false);
           setSelectedProperty(null);
